@@ -1,0 +1,296 @@
+import { ClassItem } from '../types.ts';
+
+const classesData: ClassItem[] = [
+  {
+    "id": "c1",
+    "name": "Dosa Mastery Lab",
+    "price": 89,
+    "type": "online",
+    "slug": "dosa-mastery-lab",
+    "category": "adults",
+    "tagline": "Crack the Dosa Code. Perfect Dosa. Every Time.",
+    "description": "Learn the real technique behind crispy, golden South Indian dosas — not just recipes. In this live, hands-on lab, you’ll finally understand fermentation, batter texture, and heat control so your dosa never fails again.",
+    "duration": "120 mins",
+    "masteryList": [
+      "The science of fermentation timing (US kitchen friendly)",
+      "Perfect batter viscosity for spreading thin dosas",
+      "Heat zones & pan seasoning for crisp texture",
+      "Spreading technique that stops sticking & tearing",
+      "How to rescue sour, flat, or rubbery batter"
+    ],
+    "includedList": [
+      "Live step-by-step cooking instruction",
+      "Printable Dosa Lab Recipe Packet",
+      "Fermentation & batter troubleshooting chart",
+      "Video recording (sent after class)",
+      "Access to Dosalabs Library (7 days)"
+    ],
+    "ingredients": [
+      "1 cup idli rice or parboiled rice",
+      "½ cup urad dal (split, skinless)",
+      "¼ teaspoon fenugreek seeds",
+      "Filtered water",
+      "Salt to taste",
+      "Neutral oil or ghee"
+    ],
+    "equipment": [
+      "Blender or wet grinder",
+      "Non-stick or cast-iron dosa pan",
+      "Flat ladle / bowl for spreading",
+      "Mixing bowls",
+      "Clean kitchen towel"
+    ],
+    "goodToKnow": [
+      "This is a hands-on lab — come ready to cook.",
+      "Suitable for beginners & home cooks of all ages.",
+      "Allergens: lentils, rice (gluten-free)."
+    ]
+  },
+  {
+    "id": "c2",
+    "name": "Idli Perfect Lab",
+    "price": 89,
+    "type": "online",
+    "slug": "idli-perfect-lab",
+    "category": "adults",
+    "tagline": "Master the Fluffiness. Cloud-like Idlis, Guaranteed.",
+    "description": "Stop making idlis that double as hockey pucks. We dive deep into the specific gravity of batter and the aeration secrets that make South India's breakfast staple incredibly soft.",
+    "duration": "90 mins",
+    "masteryList": [
+      "The exact rice-to-dal ratio for maximum lift",
+      "Grinding to the perfect grit (not too smooth, not too coarse)",
+      "Aeration techniques before fermentation",
+      "Steam management and pressure control",
+      "The 'bounce test' for idli readiness"
+    ],
+    "includedList": [
+      "Live instruction session",
+      "Idli Troubleshooting Guide",
+      "Traditional & Modern variant recipes",
+      "Full class recording",
+      "Dosalabs Library access"
+    ],
+    "ingredients": [
+      "2 cups Idli Rice",
+      "½ cup whole white Urad Dal",
+      "1 teaspoon Fenugreek seeds",
+      "Non-iodized salt"
+    ],
+    "equipment": [
+      "Wet grinder or powerful blender",
+      "Idli steamer / Stand",
+      "Pressure cooker or deep pot with lid",
+      "Large fermentation vessel"
+    ],
+    "goodToKnow": [
+      "Idli batter requires specific ambient temperatures.",
+      "We will discuss winter fermentation hacks for cold climates.",
+      "Allergens: Lentils."
+    ]
+  },
+  {
+    "id": "c3",
+    "name": "Sambar Base Lab",
+    "price": 49,
+    "type": "online",
+    "slug": "sambar-base-lab",
+    "category": "adults",
+    "tagline": "The Aromatic Soul. Master the Mother Sauce.",
+    "description": "Crack the code of the perfectly balanced Sambar. Not too thick, not too watery—just pure aromatic bliss. Learn to make your own spice blends that rival any restaurant.",
+    "duration": "60 mins",
+    "masteryList": [
+      "Roasting and grinding fresh Sambar Masala",
+      "Lentil preparation for the perfect silky base",
+      "Tamarind extraction and acidity balancing",
+      "Vegetable timing (preventing mushy veggies)",
+      "The 'Tadka' (tempering) for final aromatic punch"
+    ],
+    "includedList": [
+      "Live 60-min technique lab",
+      "Custom Spice Ratio Worksheet",
+      "Regional Sambar Variations (Udupi vs Tamil)",
+      "Lifetime access to Masala Video Guide"
+    ],
+    "ingredients": [
+      "Toor Dal (Pigeon Peas)",
+      "Tamarind pulp",
+      "Sambar Onions (Shallots)",
+      "Drumstick or Mixed Vegetables",
+      "Whole Spices: Coriander, Cumin, Fenugreek, Dry Chilies"
+    ],
+    "equipment": [
+      "Pressure cooker or pot for dal",
+      "Spice grinder (or mortar & pestle)",
+      "Deep heavy-bottomed pan",
+      "Small tadka pan"
+    ],
+    "goodToKnow": [
+      "Freshly ground spices are key to this lab.",
+      "Vegetarian and Vegan friendly.",
+      "Allergens: Lentils."
+    ]
+  },
+  {
+    "id": "c4",
+    "name": "Chutneys 4 Ways",
+    "price": 49,
+    "type": "online",
+    "slug": "chutneys-4-ways",
+    "category": "adults",
+    "tagline": "The Essential Quartet. Elevate Your Plate.",
+    "description": "A dosa is only as good as its accompaniments. Master the four pillars: Coconut, Tomato, Peanut, and Cilantro/Mint. Learn the science of emulsion and texture.",
+    "duration": "60 mins",
+    "masteryList": [
+      "Achieving stable emulsions with coconut",
+      "Charring tomatoes for smoky Red Chutney",
+      "The 'Crunch vs Creamy' peanut ratio",
+      "Preserving vibrant green in herb chutneys",
+      "The universal tempering technique"
+    ],
+    "includedList": [
+      "Live 4-part demo & cook-along",
+      "Shelf-life & Storage Guide",
+      "Tadka Mastery PDF",
+      "Dosalabs Library access"
+    ],
+    "ingredients": [
+      "Fresh or frozen grated coconut",
+      "Roasted peanuts",
+      "Fresh cilantro and mint",
+      "Ripe tomatoes",
+      "Ginger, Green chilies, Curry leaves"
+    ],
+    "equipment": [
+      "High-speed blender",
+      "Small frying pan",
+      "Storage containers"
+    ],
+    "goodToKnow": [
+      "Quick class, high impact.",
+      "Most chutneys can be made ahead of time.",
+      "Allergens: Peanuts, Coconut."
+    ]
+  },
+  {
+    "id": "c5",
+    "name": "South Indian Starter Pack",
+    "price": 199,
+    "type": "package",
+    "slug": "starter-pack",
+    "category": "adults",
+    "tagline": "The Complete Foundation. From Grain to Gourmet.",
+    "description": "Our most popular intensive. A three-part journey that covers the holy trinity of South Indian breakfast: Dosa, Idli, and the supporting Masalas. Perfect for those starting from scratch.",
+    "duration": "3 Sessions",
+    "masteryList": [
+      "Holistic understanding of fermented batters",
+      "Managing a South Indian pantry in the US",
+      "Scheduling prep for weekend feasts",
+      "Mastery of both steamed and griddled techniques",
+      "Efficient multi-tasking in the kitchen"
+    ],
+    "includedList": [
+      "3 Live Lab Sessions (scheduled over 2 weeks)",
+      "Full Starter Toolkit (Digital)",
+      "Direct WhatsApp access to the Chef for 14 days",
+      "Bonus: South Indian Filter Coffee Workshop"
+    ],
+    "ingredients": [
+      "Full South Indian grocery list provided upon signup",
+      "Covers all basic grains, lentils, and spices"
+    ],
+    "equipment": [
+      "Wet grinder or heavy-duty blender",
+      "Idli stand",
+      "Dosa tawa"
+    ],
+    "goodToKnow": [
+      "Best value for beginners.",
+      "Sessions are recorded if you miss one.",
+      "Requires some pre-soaking of grains."
+    ]
+  },
+  {
+    "id": "c6",
+    "name": "Weekend Family Dosa Lab",
+    "price": 249,
+    "type": "in-home",
+    "slug": "family-lab",
+    "category": "adults",
+    "tagline": "The Lab Comes to You. Hands-On Family Fun.",
+    "description": "Turn your kitchen into a professional Dosa Lab. We bring the pre-fermented batter, the specialty tools, and the expertise. A full sensory experience for parents and kids alike.",
+    "duration": "180 mins",
+    "masteryList": [
+      "Custom heat calibration for your specific stove",
+      "Kid-friendly 'Dosa Art' (making shapes)",
+      "Interactive Sambar building",
+      "The 'Chef's Wrist' spreading drill",
+      "Kitchen workflow optimization"
+    ],
+    "includedList": [
+      "Chef visit (in-home)",
+      "Premium pre-fermented batter for 6-8 people",
+      "Loaner cast iron tawas for the session",
+      "Lab aprons for the kids",
+      "Printed family recipe book"
+    ],
+    "ingredients": [
+      "Chef brings all core ingredients",
+      "Customer provides basic oil, salt, and water"
+    ],
+    "equipment": [
+      "Your stove (gas, electric, or induction)",
+      "A large dining table",
+      "Chef brings the rest!"
+    ],
+    "goodToKnow": [
+      "Available within 40 miles of Montclair, NJ.",
+      "Perfect for birthday parties or family gatherings.",
+      "Travel fees apply based on distance (see policies)."
+    ]
+  },
+  {
+    "id": "c7",
+    "name": "Kids Dosa Lab",
+    "price": 39,
+    "type": "online",
+    "slug": "kids-dosa-lab",
+    "category": "kids",
+    "tagline": "Mini Chefs, Major Flips. Cooking with Fun.",
+    "description": "A fun, hands-on dosa experience for kids. They’ll spread batter, flip mini dosas, and build colorful plates in this high-energy, safe kitchen laboratory.",
+    "duration": "60 mins",
+    "masteryList": [
+      "Safe batter spreading techniques",
+      "The art of the perfect mini-flip",
+      "Colorful plate building with healthy sides",
+      "Kitchen safety for young chefs",
+      "Tasting and flavor identification"
+    ],
+    "includedList": [
+      "Live 60-min interactive session",
+      "Printable Dosa Lab Activity Sheet",
+      "Digital 'Mini Chef' Badge on completion",
+      "Kid-friendly recipe cards",
+      "Parental supervision guide"
+    ],
+    "ingredients": [
+      "Pre-made dosa batter (store bought or homemade)",
+      "Mild cheese or fruit for toppings",
+      "Yogurt for dipping",
+      "Non-stick cooking spray or mild oil"
+    ],
+    "equipment": [
+      "Small non-stick pan",
+      "Plastic or silicone spatula",
+      "Small bowl for spreading",
+      "Colorful plates"
+    ],
+    "goodToKnow": [
+      "Ages 5–12 only.",
+      "All kids sessions REQUIRE active adult supervision.",
+      "Heat-controlled surfaces and kid-safe tools strictly recommended.",
+      "Available for In-Home Birthday Parties ($129 + Travel)."
+    ]
+  }
+];
+
+export default classesData;

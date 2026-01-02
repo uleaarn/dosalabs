@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dosalabs — Crack the Dosa Code | Technique-First Dosa Cooking Labs</title>
+    <meta name="description" content="Technique-first dosa cooking labs teaching fermentation science, batter texture control, and heat mastery through live online and in-home experiences.">
+    <meta name="keywords" content="dosa cooking class, south indian cooking, fermentation science, cooking classes NJ, online cooking classes, medu vada, idli, dosa workshop">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              ink: '#0B0B0C',
+              darkSurface: '#111214',
+              graySubtle: '#F6F7F8',
+              grayLight: '#EDEFF2',
+              grayBorder: '#E6E7EB',
+              grayMedium: '#3A3D42',
+              accent: '#BF9264',
+            },
+            fontFamily: {
+              sans: ['Inter', 'sans-serif'],
+            },
+            borderRadius: {
+              'card': '20px',
+            },
+            fontSize: {
+              'h1': ['56px', '64px'],
+              'h2': ['36px', '44px'],
+              'h3': ['24px', '32px'],
+              'body': ['16px', '26px'],
+            }
+          }
+        }
+      }
+    </script>
+    <style>
+      body {
+        font-family: 'Inter', sans-serif;
+        color: #0B0B0C;
+        background-color: #FFFFFF;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      /* Swiss Minimal - Spotlight */
+      .spotlight-card {
+        --mouse-x: -100%;
+        --mouse-y: -100%;
+      }
+      .spotlight-card .spotlight-gradient {
+        background: radial-gradient(
+          600px circle at var(--mouse-x) var(--mouse-y),
+          rgba(191, 146, 100, 0.08),
+          transparent 40%
+        );
+      }
+
+      /* Border Beam Animation */
+      @keyframes border-beam {
+        from { offset-distance: 0%; }
+        to { offset-distance: 100%; }
+      }
+
+      .btn-beam-container {
+        position: relative;
+        z-index: 1;
+        overflow: hidden;
+      }
+
+      .btn-beam-path {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        z-index: -1;
+        padding: 1px;
+        border-radius: inherit;
+        background: transparent;
+        mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+        mask-composite: exclude;
+      }
+
+      .btn-beam-moving-part {
+        position: absolute;
+        width: 40px;
+        height: 40px;
+        background: #BF9264;
+        opacity: 0.25;
+        offset-path: border-box;
+        animation: border-beam 3s linear infinite;
+        visibility: hidden;
+      }
+
+      .btn-beam-container:hover .btn-beam-moving-part {
+        visibility: visible;
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .btn-beam-moving-part {
+          animation: none !important;
+          visibility: hidden !important;
+        }
+        .spotlight-card .spotlight-gradient {
+          display: none !important;
+        }
+      }
+
+      /* Logo Marquee Alpha Mask */
+      .marquee-mask {
+        mask-image: linear-gradient(to right, transparent, black 15%, black 85%, transparent);
+      }
+    </style>
+<script type="importmap">
+{
+  "imports": {
+    "framer-motion": "https://esm.sh/framer-motion@^12.23.26",
+    "react/": "https://esm.sh/react@^19.2.3/",
+    "react": "https://esm.sh/react@^19.2.3",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
+    "react-router-dom": "https://esm.sh/react-router-dom@^7.11.0"
+  }
+}
+</script>
+<link rel="stylesheet" href="/index.css">
+</head>
+<body>
+    <div id="root"></div>
+<script type="module" src="/index.tsx"></script>
+</body>
+</html>

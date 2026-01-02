@@ -1,0 +1,21 @@
+
+[
+  {
+    "id": "b1",
+    "title": "The Chemistry of Fermentation",
+    "slug": "chemistry-of-fermentation",
+    "excerpt": "Why temperature and wild yeast are your best friends in the dosa lab.",
+    "content": "Fermentation is a delicate dance of bacteria and yeast...",
+    "date": "2024-10-12",
+    "image": "https://picsum.photos/seed/dosa1/800/400"
+  },
+  {
+    "id": "b2",
+    "title": "Choosing Your Tawa",
+    "slug": "choosing-your-tawa",
+    "excerpt": "Non-stick vs. Cast Iron: Which one produces the best lattice texture?",
+    "content": "A good dosa starts with the right thermal mass...",
+    "date": "2024-10-15",
+    "image": "https://picsum.photos/seed/dosa2/800/400"
+  }
+]
