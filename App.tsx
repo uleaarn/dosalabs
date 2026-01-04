@@ -11,6 +11,9 @@ import { ClassDetail } from './pages/ClassDetail.tsx';
 import { InHome } from './pages/InHome.tsx';
 import { BlogPostDetail } from './pages/BlogPostDetail.tsx';
 import { KitCheckout } from './pages/KitCheckout.tsx';
+import { ClaimDashboard } from './pages/ClaimDashboard.tsx';
+import { GuestDashboard } from './pages/GuestDashboard.tsx';
+import AuthAction from './pages/AuthAction.tsx';
 import { ClassItem, KitItem, BlogPost } from './types.ts';
 
 import kitsData from './data/kits.ts';
@@ -18,9 +21,9 @@ import blogData from './data/blog.ts';
 import classesData from './data/classes.ts';
 
 const classImages: Record<string, string> = {
-  'c1': 'https://images.unsplash.com/photo-1668236543090-82eba5ee5976?q=80&w=600&auto=format&fit=crop',
+  'c1': 'https://images.unsplash.com/photo-1589301760014-d929f3979dbc?q=80&w=600&auto=format&fit=crop',
   'c2': 'https://images.unsplash.com/photo-1589302168068-964664d93dc0?q=80&w=600&auto=format&fit=crop',
-  'c3': 'https://images.unsplash.com/photo-1546833999-b9f581a1996d?q=80&w=600&auto=format&fit=crop',
+  'c3': 'https://images.unsplash.com/photo-1601050690597-df0568f70950?q=80&w=600&auto=format&fit=crop',
   'c4': 'https://images.unsplash.com/photo-1645177623570-2a938faec021?q=80&w=600&auto=format&fit=crop',
   'c5': 'https://images.unsplash.com/photo-1630409351241-e90e7f5e434d?q=80&w=600&auto=format&fit=crop',
   'c6': 'https://images.unsplash.com/photo-1556910103-1c02745aae4d?q=80&w=600&auto=format&fit=crop',
@@ -115,8 +118,8 @@ const Kits = () => (
     </div>
     <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
       {kitsData.map(kit => (
-        <div key={kit.id} className="relative p-[2px] rounded-card bg-gradient-to-br from-grayBorder via-grayBorder/50 to-grayBorder hover:from-accent hover:via-accent/40 hover:to-accent transition-all duration-700 group shadow-lg hover:shadow-2xl">
-          <div className="flex flex-col h-full rounded-[18px] bg-white overflow-hidden">
+        <div key={kit.id} className="relative p-[1.5px] rounded-card bg-gradient-to-br from-grayBorder via-accent/20 to-grayBorder hover:from-accent hover:via-[#D4A77C] hover:to-accent transition-all duration-700 group shadow-lg hover:shadow-[0_20px_50px_-12px_rgba(191,146,100,0.3)]">
+          <div className="flex flex-col h-full rounded-[19px] bg-white overflow-hidden">
             <div className="h-64 overflow-hidden bg-grayLight border-b border-grayBorder relative">
               <img src={kit.image} alt={kit.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000 ease-out" />
               <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
@@ -200,36 +203,31 @@ const NotFound = () => (
 );
 
 const SEO = () => {
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@type": "LocalBusiness",
+    "name": "Dosalabs",
+    "image": "https://dosalabs.io/logo.png",
+    "address": {
+      "@type": "PostalAddress",
+      "streetAddress": "Montclair",
+      "addressLocality": "Montclair",
+      "addressRegion": "NJ",
+      "postalCode": "07042",
+      "addressCountry": "US"
+    },
+    "url": "https://dosalabs.io"
+  };
+
   return (
-    <script type="application/ld+json">
-      {JSON.stringify({
-        "@context": "https://schema.org",
-        "@type": "LocalBusiness",
-        "name": "Dosalabs",
-        "image": "https://dosalabs.io/logo.png",
-        "address": {
-          "@type": "PostalAddress",
-          "streetAddress": "Montclair",
-          "addressLocality": "Montclair",
-          "addressRegion": "NJ",
-          "postalCode": "07042",
-          "addressCountry": "US"
-        },
-        "url": "https://dosalabs.io"
-      })}
-    </script>
+    <script 
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+    />
   );
 };
 
 export default function App() {
-  useEffect(() => {
-    // Force a redirect to the Home page on refresh/initial load
-    // This runs once when the component mounts (the app starts)
-    if (window.location.hash !== '' && window.location.hash !== '#/') {
-      window.location.hash = '#/';
-    }
-  }, []);
-
   return (
     <Router>
       <SEO />
@@ -248,6 +246,9 @@ export default function App() {
           <Route path="/blog/:slug" element={<BlogPostDetail />} />
           <Route path="/policies" element={<Policies />} />
           <Route path="/legal" element={<Legal />} />
+          <Route path="/claim" element={<ClaimDashboard />} />
+          <Route path="/dashboard" element={<GuestDashboard />} />
+          <Route path="/auth/action" element={<AuthAction />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Layout>

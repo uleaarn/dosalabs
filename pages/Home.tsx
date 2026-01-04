@@ -14,7 +14,7 @@ const DISHES = [
     name: 'Dosa',
     color: '#BF9264',
     eyebrow: 'FERMENTATION • HEAT • SPREAD',
-    image: 'https://images.unsplash.com/photo-1668236543090-82eba5ee5976?q=80&w=2070&auto=format&fit=crop',
+    image: 'https://images.unsplash.com/photo-1589301760014-d929f3979dbc?q=80&w=2070&auto=format&fit=crop',
   },
   {
     name: 'Idli',
@@ -32,13 +32,13 @@ const DISHES = [
     name: 'Sambar',
     color: '#BF9264',
     eyebrow: 'AROMATICS • LENTILS • TEMPER',
-    image: 'https://images.unsplash.com/photo-1546833999-b9f581a1996d?q=80&w=2070&auto=format&fit=crop',
+    image: 'https://images.unsplash.com/photo-1601050690597-df0568f70950?q=80&w=2070&auto=format&fit=crop',
   },
   {
     name: 'Medu Vada',
     color: '#BF9264',
     eyebrow: 'SOAK • GRIND • SHAPE • FRY',
-    image: 'https://images.unsplash.com/photo-1621510456681-23a016df2404?q=80&w=2070&auto=format&fit=crop',
+    image: 'https://images.unsplash.com/photo-1626132646529-500637532537?q=80&w=2070&auto=format&fit=crop',
   }
 ];
 
@@ -128,7 +128,7 @@ export const Home = () => {
     if (shouldReduceMotion || isPaused) return;
     const interval = setInterval(() => {
       setCurrentIndex((prev) => (prev + 1) % DISHES.length);
-    }, 7000); // 7s per slide as per requirements
+    }, 7000); // 7s per slide
     return () => clearInterval(interval);
   }, [shouldReduceMotion, isPaused]);
 
@@ -322,7 +322,7 @@ export const Home = () => {
             <Link to="/classes/dosa-mastery-lab" className="block h-full relative overflow-hidden rounded-card border border-grayBorder bg-white shadow-xl hover:shadow-[0_40px_80px_-20px_rgba(0,0,0,0.15)] transition-all duration-500">
               <div className="aspect-[16/10] lg:aspect-auto lg:h-[600px] overflow-hidden">
                 <img 
-                  src="https://images.unsplash.com/photo-1668236543090-82eba5ee5976?q=80&w=1200&auto=format&fit=crop" 
+                  src="https://images.unsplash.com/photo-1589301760014-d929f3979dbc?q=80&w=1200&auto=format&fit=crop" 
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-1000 ease-out" 
                   alt="Dosa Mastery Lab" 
                 />
@@ -440,29 +440,6 @@ export const Home = () => {
             </div>
           </div>
         </InViewReveal>
-      </section>
-
-      {/* Private Event Block */}
-      <section className="max-w-7xl mx-auto px-4 md:px-6 py-16 md:py-32 bg-graySubtle md:rounded-[40px] mb-32">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-24 items-center">
-          <div className="p-4 order-2 md:order-1">
-            <InViewReveal>
-              <h2 className="text-sm font-bold uppercase tracking-widest text-accent mb-6">Private Experiences</h2>
-              <h3 className="text-h2 font-bold mb-8 leading-tight">Host a personalized in-home Dosalab experience.</h3>
-              <p className="text-body text-grayMedium mb-10 leading-relaxed max-w-lg">
-                Perfect for friends and family. Enjoy a custom menu, technique deep-dives, and dedicated chef-led guidance focused on your specific culinary goals.
-              </p>
-              <BorderBeamButton to="/contact-booking" primary className="w-fit">Book Private Event</BorderBeamButton>
-            </InViewReveal>
-          </div>
-          <div className="order-1 md:order-2">
-            <SpotlightCard className="p-0 border-none shadow-2xl">
-              <div className="aspect-[16/9] md:aspect-[4/3] rounded-card overflow-hidden">
-                <img src="https://images.unsplash.com/photo-1555244162-803834f70033?q=80&w=1000" alt="Private Group Cooking Lab" className="w-full h-full object-cover" loading="lazy" />
-              </div>
-            </SpotlightCard>
-          </div>
-        </div>
       </section>
 
       {/* FAQ Section */}

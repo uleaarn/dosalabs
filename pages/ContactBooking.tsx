@@ -2,33 +2,26 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { calculatePrice } from '../lib/pricing.ts';
-import { generateICSFromBooking } from '../lib/ics.ts';
-import { submitBooking } from '../lib/mockApi.ts';
-import { BookingState, ClassItem, BookingRecord } from '../types.ts';
+import { submitBooking, resendBookingEmail } from '../lib/mockApi.ts';
+import { BookingState } from '../types.ts';
 
 import classesData from '../data/classes.ts';
 import kitsData from '../data/kits.ts';
 
-const TIME_ZONES = [
-  "Eastern Time (ET)", "Central Time (CT)", "Mountain Time (MT)", "Pacific Time (PT)", "Alaska Time (AKT)", "Hawaii-Aleutian Time (HAT)"
-];
-
-const PICKUP_SLOTS = [
-  "Friday 4pm - 6pm", "Saturday 9am - 11am", "Saturday 4pm - 6pm", "Sunday 9am - 11am"
-];
-
 export const ContactBooking = () => {
   const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isRetryingEmail, setIsRetryingEmail] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [emailStatus, setEmailStatus] = useState<'SENT' | 'FAILED' | 'QUEUED' | 'PENDING'>('PENDING');
   const [finalBookingId, setFinalBookingId] = useState('');
   
-  // Memoized ID for idempotency during the session
-  const sessionBookingId = useMemo(() => `DL-${Math.floor(100000 + Math.random() * 900000)}`, []);
+  // Permanent unique ID for this specific session/booking attempt
+  const bookingRequestId = useMemo(() => `req_${Math.random().toString(36).substr(2, 12)}_${Date.now()}`, []);
 
   const [form, setForm] = useState<BookingState>({
     step: 1,
-    bookingId: sessionBookingId,
+    bookingId: '',
     contact: { fullName: '', email: '', phone: '', audienceType: 'individual', organizationName: '' },
     selection: { classId: 'c1', date: '', format: 'online', timeSlot: 'afternoon', timeZone: 'Eastern Time (ET)', selectedKits: [] },
     details: { 
@@ -56,36 +49,6 @@ export const ContactBooking = () => {
   const handleNext = () => setStep(s => s + 1);
   const handleBack = () => setStep(s => s - 1);
 
-  const downloadPrepChecklist = (selectedClass: ClassItem) => {
-    const content = `DOSALABS PREP CHECKLIST: ${selectedClass.name}
-Booking ID: ${finalBookingId}
-
-EQUIPMENT NEEDED:
-${selectedClass.equipment.map(e => `- [ ] ${e}`).join('\n')}
-
-INGREDIENTS TO SOURCE:
-${selectedClass.ingredients.map(i => `- [ ] ${i}`).join('\n')}
-
-DIETARY NOTES:
-${form.details.allergies || 'None specified'}
-
-IMPORTANT LAB NOTES:
-${selectedClass.goodToKnow.map(g => `* ${g}`).join('\n')}
-
-See you in the Lab!
-- Dosalabs Team`;
-
-    const blob = new Blob([content], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `Dosalabs_Prep_Checklist_${finalBookingId}.txt`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (step < 4) {
@@ -97,18 +60,38 @@ See you in the Lab!
       }
       setIsSubmitting(true);
       try {
-        const response = await submitBooking(form);
+        const selectedClass = classesData.find(c => c.id === form.selection.classId);
+        const response = await submitBooking({
+          ...form,
+          labName: selectedClass?.name || 'Dosa Mastery Lab',
+          bookingRequestId
+        });
+        
         if (response.success) {
           setFinalBookingId(response.bookingId);
+          setEmailStatus(response.emailStatus as any);
           setSuccess(true);
           window.scrollTo(0, 0);
+        } else {
+          alert(response.error || "Submission failed. Please try again.");
         }
       } catch (error) {
-        alert("Booking failed. Please try again.");
+        alert("Network error. Please check your connection.");
       } finally {
         setIsSubmitting(false);
       }
     }
+  };
+
+  const handleRetryEmail = async () => {
+    setIsRetryingEmail(true);
+    const result = await resendBookingEmail(bookingRequestId);
+    if (result.success) {
+      setEmailStatus('SENT');
+    } else {
+      alert(result.error || "Retry failed. Limit may have been reached.");
+    }
+    setIsRetryingEmail(false);
   };
 
   const updateField = (section: keyof BookingState, field: string, value: any) => {
@@ -135,7 +118,6 @@ See you in the Lab!
 
   if (success) {
     const selectedClass = classesData.find(c => c.id === form.selection.classId);
-    const selectedClassName = selectedClass?.name || 'Dosa Lab';
     
     return (
       <div className="max-w-3xl mx-auto px-6 py-24">
@@ -143,27 +125,52 @@ See you in the Lab!
           <div className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-8">
             <svg width="40" height="40" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7" /></svg>
           </div>
-          <h1 className="text-4xl font-bold mb-4">Confirmed!</h1>
-          <p className="text-grayMedium mb-2">Booking ID: <span className="font-mono font-bold text-ink">{finalBookingId}</span></p>
-          <p className="text-grayMedium mb-10 max-w-md mx-auto">Confirmation sent to <strong>{form.contact.email}</strong>.</p>
+          <h1 className="text-4xl font-bold mb-4 tracking-tight">Lab Confirmed!</h1>
+          <p className="text-grayMedium mb-2 font-medium">Booking ID: <span className="font-mono font-bold text-ink">{finalBookingId}</span></p>
           
-          <div className="bg-graySubtle p-8 rounded-xl text-left mb-10 border border-grayBorder">
-            <h3 className="font-bold mb-4 text-xs uppercase tracking-widest text-accent">Booking Summary</h3>
-            <div className="grid grid-cols-2 gap-y-4 text-sm">
-              <span className="text-grayMedium">Lab:</span> <span className="font-bold text-right">{selectedClassName}</span>
-              <span className="text-grayMedium">Date:</span> <span className="font-bold text-right">{form.selection.date} ({form.selection.timeSlot})</span>
-              <span className="text-grayMedium border-t border-grayBorder pt-2">Total Paid:</span> <span className="font-bold text-right border-t border-grayBorder pt-2 text-lg">${form.pricing.total}</span>
+          <div className="mb-10 p-6 bg-graySubtle rounded-2xl border border-grayBorder inline-flex flex-col items-center gap-4 w-full">
+            {emailStatus === 'SENT' || emailStatus === 'QUEUED' ? (
+              <p className="text-green-600 text-[11px] font-bold uppercase tracking-[0.2em] flex items-center gap-3">
+                <span className="w-2.5 h-2.5 bg-green-500 rounded-full animate-pulse" />
+                Confirmation Sent to {form.contact.email}
+              </p>
+            ) : (
+              <div className="flex flex-col items-center gap-4">
+                <p className="text-red-500 text-[11px] font-bold uppercase tracking-[0.2em]">⚠ Email Queue Error</p>
+                <button 
+                  onClick={handleRetryEmail}
+                  disabled={isRetryingEmail}
+                  className="px-8 py-3 bg-white border border-grayBorder rounded-full text-[10px] font-bold uppercase tracking-widest hover:bg-grayLight disabled:opacity-50 transition-all shadow-sm"
+                >
+                  {isRetryingEmail ? "Retrying..." : "Resend Confirmation"}
+                </button>
+              </div>
+            )}
+          </div>
+          
+          <div className="bg-graySubtle p-10 rounded-2xl text-left mb-12 border border-grayBorder">
+            <h3 className="font-bold mb-6 text-[10px] uppercase tracking-[0.3em] text-accent">Laboratory Summary</h3>
+            <div className="space-y-4 text-sm">
+              <div className="flex justify-between">
+                <span className="text-grayMedium">Module:</span> <span className="font-bold text-ink">{selectedClass?.name}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-grayMedium">Session:</span> <span className="font-bold text-ink">{form.selection.date} ({form.selection.timeSlot})</span>
+              </div>
+              <div className="flex justify-between pt-4 border-t border-grayBorder">
+                <span className="font-bold">Amount Paid:</span> <span className="font-bold text-lg text-ink">${form.pricing.total}</span>
+              </div>
             </div>
           </div>
 
-          <div className="flex justify-center gap-4">
-            <button 
-              onClick={() => selectedClass && downloadPrepChecklist(selectedClass)}
-              className="px-10 py-4 bg-ink text-white rounded-full font-bold hover:bg-opacity-90 transition-all"
+          <div className="flex flex-col sm:flex-row justify-center gap-4">
+            <Link 
+              to={`/dashboard?bid=${bookingRequestId}`} 
+              className="px-10 py-5 bg-ink text-white rounded-full font-bold hover:bg-opacity-90 transition-all shadow-lg text-sm uppercase tracking-widest"
             >
-              Download Prep Checklist
-            </button>
-            <Link to="/" className="px-10 py-4 border border-ink text-ink rounded-full font-bold hover:bg-graySubtle transition-all">
+              Access Lab Prep
+            </Link>
+            <Link to="/" className="px-10 py-5 border border-ink text-ink rounded-full font-bold hover:bg-graySubtle transition-all text-sm uppercase tracking-widest">
               Return Home
             </Link>
           </div>
@@ -207,17 +214,6 @@ See you in the Lab!
                     <input required value={form.contact.phone} onChange={e => updateField('contact', 'phone', e.target.value)} type="tel" placeholder="(973) 000-0000" className="w-full p-4 border border-grayBorder rounded-xl outline-none focus:ring-1 focus:ring-accent" />
                   </div>
                 </div>
-                <div className="space-y-4">
-                  <label className="text-xs font-bold uppercase tracking-wider block">Audience Type</label>
-                  <div className="flex flex-wrap gap-4">
-                    {['individual', 'family', 'organization'].map((type) => (
-                      <label key={type} className={`flex-grow cursor-pointer p-4 border rounded-xl flex items-center gap-3 transition-all ${form.contact.audienceType === type ? 'border-ink bg-graySubtle' : 'border-grayBorder hover:bg-white'}`}>
-                        <input type="radio" name="audienceType" checked={form.contact.audienceType === type} onChange={() => updateField('contact', 'audienceType', type)} className="accent-ink" />
-                        <span className="capitalize text-sm font-medium">{type}</span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
               </motion.div>
             )}
 
@@ -240,19 +236,6 @@ See you in the Lab!
                     ))}
                   </div>
                 </div>
-                <div className="space-y-4">
-                  <label className="text-xs font-bold uppercase tracking-wider block">Participant Age Group</label>
-                  <div className="flex gap-4">
-                    {['kids', 'teens', 'adults'].map((age) => (
-                      <label key={age} className={`flex-grow cursor-pointer p-4 border rounded-xl flex items-center justify-center gap-3 transition-all ${form.details.participantAgeGroup === age ? 'border-ink bg-graySubtle' : 'border-grayBorder hover:bg-white'}`}>
-                        <input type="radio" name="ageGroup" checked={form.details.participantAgeGroup === age} onChange={() => updateField('details', 'participantAgeGroup', age)} className="accent-ink" />
-                        <span className="capitalize text-xs font-bold tracking-widest">
-                          {age === 'kids' ? 'Kids (5-12)' : age}
-                        </span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <label className="text-xs font-bold uppercase tracking-wider">Preferred Date</label>
@@ -267,17 +250,6 @@ See you in the Lab!
                     </select>
                   </div>
                 </div>
-                {form.selection.format === 'in-home' && (
-                  <div className="space-y-2">
-                    <label className="text-xs font-bold uppercase tracking-wider">ZIP Code (NJ/NY Only)</label>
-                    <input required pattern="[0-9]{5}" maxLength={5} value={form.details.zipCode} onChange={e => updateField('details', 'zipCode', e.target.value)} placeholder="07042" className="w-full p-4 border border-grayBorder rounded-xl outline-none focus:ring-1 focus:ring-accent" />
-                  </div>
-                )}
-                {isKidsSession && (
-                  <div className="bg-accent/5 p-4 rounded-xl border border-accent/20">
-                    <p className="text-[10px] font-bold text-accent uppercase tracking-widest leading-relaxed">Safety Notice: Sessions for ages 5-12 require active adult supervision. Heat-controlled surfaces and kid-safe tools only.</p>
-                  </div>
-                )}
               </motion.div>
             )}
 
@@ -285,25 +257,11 @@ See you in the Lab!
               <motion.div key="s3" initial={{ x: 10, opacity: 0 }} animate={{ x: 0, opacity: 1 }} exit={{ x: -10, opacity: 0 }} className="space-y-6">
                 <div className="space-y-2">
                   <label className="text-xs font-bold uppercase tracking-wider">Kitchen Notes</label>
-                  <textarea value={form.details.kitchenNotes} onChange={e => updateField('details', 'kitchenNotes', e.target.value)} placeholder="e.g. Induction stove, specific equipment..." className="w-full p-4 border border-grayBorder rounded-xl outline-none min-h-[80px] focus:ring-1 focus:ring-accent" />
+                  <textarea value={form.details.kitchenNotes} onChange={e => updateField('details', 'kitchenNotes', e.target.value)} placeholder="e.g. Induction stove..." className="w-full p-4 border border-grayBorder rounded-xl outline-none min-h-[80px] focus:ring-1 focus:ring-accent" />
                 </div>
                 <div className="space-y-2">
                   <label className="text-xs font-bold uppercase tracking-wider">Allergies</label>
-                  <textarea required value={form.details.allergies} onChange={e => updateField('details', 'allergies', e.target.value)} placeholder="Please list any allergies or 'None'." className="w-full p-4 border border-grayBorder rounded-xl outline-none min-h-[80px] focus:ring-1 focus:ring-accent" />
-                </div>
-                <div className="pt-4 border-t border-grayBorder">
-                  <label className="text-xs font-bold uppercase tracking-wider block mb-4">Add-Ons</label>
-                  <div className="space-y-3">
-                    {kitsData.map(kit => (
-                      <div key={kit.id} onClick={() => toggleKit(kit.id)} className={`p-4 border rounded-xl cursor-pointer flex items-center justify-between transition-all ${form.selection.selectedKits.includes(kit.id) ? 'border-ink bg-graySubtle' : 'border-grayBorder hover:bg-white'}`}>
-                        <div className="flex items-center gap-3">
-                          <input type="checkbox" checked={form.selection.selectedKits.includes(kit.id)} readOnly className="accent-ink" />
-                          <span className="text-sm font-bold">{kit.name}</span>
-                        </div>
-                        <span className="text-sm font-bold">+${kit.price}</span>
-                      </div>
-                    ))}
-                  </div>
+                  <textarea required value={form.details.allergies} onChange={e => updateField('details', 'allergies', e.target.value)} placeholder="List allergies or 'None'." className="w-full p-4 border border-grayBorder rounded-xl outline-none min-h-[80px] focus:ring-1 focus:ring-accent" />
                 </div>
               </motion.div>
             )}
@@ -317,14 +275,6 @@ See you in the Lab!
                       <span className="text-grayMedium">Lab:</span>
                       <span className="font-bold">{classesData.find(c => c.id === form.selection.classId)?.name}</span>
                     </div>
-                    <div className="flex justify-between border-b border-grayBorder pb-2">
-                      <span className="text-grayMedium">Age Group:</span>
-                      <span className="font-bold capitalize">{form.details.participantAgeGroup === 'kids' ? 'Kids (5-12)' : form.details.participantAgeGroup}</span>
-                    </div>
-                    <div className="flex justify-between border-b border-grayBorder pb-2">
-                      <span className="text-grayMedium">Format:</span>
-                      <span className="font-bold capitalize">{form.selection.format} Lab</span>
-                    </div>
                     <div className="flex justify-between pt-4">
                       <span className="text-lg font-bold">Total Due</span>
                       <span className="text-2xl font-bold text-ink">${form.pricing.total}</span>
@@ -337,26 +287,14 @@ See you in the Lab!
                     <input type="checkbox" required checked={form.details.consent} onChange={e => updateField('details', 'consent', e.target.checked)} className="w-5 h-5 accent-ink mt-0.5" />
                     <label className="text-sm font-medium">I agree to the Lab Policies.</label>
                   </div>
-                  {isKidsSession && (
-                    <>
-                      <div className="flex items-start gap-3">
-                        <input type="checkbox" required checked={form.details.parentalSupervisionConsent} onChange={e => updateField('details', 'parentalSupervisionConsent', e.target.checked)} className="w-5 h-5 accent-ink mt-0.5" />
-                        <label className="text-sm font-medium">I acknowledge that an adult (18+) must be supervising for the duration of this Kids Lab.</label>
-                      </div>
-                      <div className="flex items-start gap-3">
-                        <input type="checkbox" required checked={form.details.safetyToolsConsent} onChange={e => updateField('details', 'safetyToolsConsent', e.target.checked)} className="w-5 h-5 accent-ink mt-0.5" />
-                        <label className="text-sm font-medium">I agree to provide kid-safe tools and maintain safety around hot surfaces.</label>
-                      </div>
-                    </>
-                  )}
                 </div>
 
                 <button 
                   type="submit" 
                   disabled={isSubmitting}
-                  className="w-full py-4 bg-ink text-white rounded-full font-bold shadow-lg hover:bg-opacity-90 transition-all"
+                  className="w-full py-4 bg-ink text-white rounded-full font-bold shadow-lg hover:bg-opacity-90 transition-all disabled:opacity-50"
                 >
-                  {isSubmitting ? "Processing..." : `Pay $${form.pricing.total}`}
+                  {isSubmitting ? "Processing..." : `Confirm & Book Lab`}
                 </button>
               </motion.div>
             )}
@@ -392,11 +330,6 @@ See you in the Lab!
             <span className="text-sm font-medium">Total</span>
             <span className="text-3xl font-bold">${form.pricing.total}</span>
           </div>
-          {isKidsSession && (
-            <div className="mt-4 p-3 bg-accent/5 rounded-lg border border-accent/20">
-               <p className="text-[10px] font-bold text-accent uppercase tracking-widest">Kids Session: 60-min duration</p>
-            </div>
-          )}
         </div>
       </div>
     </div>
