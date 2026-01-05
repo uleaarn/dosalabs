@@ -1,0 +1,7 @@
+{
+  "name": "Dosalabs — Crack the Dosa Code",
+  "description": "Technique-first dosa cooking labs teaching fermentation science, batter texture control, and heat mastery through live online and in-home experiences.",
+  "requestFramePermissions": [
+    "geolocation"
+  ]
+}

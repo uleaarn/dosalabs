@@ -1,0 +1,11 @@
+User-agent: *
+Allow: /
+
+# Disallow private user areas and authentication flows
+Disallow: /#/dashboard
+Disallow: /#/claim
+Disallow: /#/auth/action
+Disallow: /#/kit-checkout/
+
+# Sitemaps
+Sitemap: https://dosalabs.io/sitemap.xml
