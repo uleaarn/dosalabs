@@ -7,7 +7,7 @@ const isLocal =
   window.location.hostname === '127.0.0.1' || 
   window.location.hostname.includes('.lovableproject.com');
 
-const PROJECT_ID = "dosalabs-prod";
+const PROJECT_ID = "dosalabs-95e1b";
 const REGION = "us-central1";
 
 // Production URL vs Emulator URL
@@ -70,6 +70,7 @@ export const submitBooking = async (
       bookingRequestId: bookingData.bookingRequestId,
       email: bookingData.contact.email,
       guestName: bookingData.contact.fullName,
+      phone: bookingData.contact.phone,
       labId: bookingData.selection.classId,
       // Create valid datetime string for backend consumption
       datetimeISO: `${bookingData.selection.date}T${formattedTime}`,

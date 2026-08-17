@@ -1,10 +1,24 @@
 const { onRequest } = require("firebase-functions/v2/https");
 const { getFirestore, FieldValue } = require("firebase-admin/firestore");
 const { initializeApp } = require("firebase-admin/app");
-const { Resend } = require("resend");
+const nodemailer = require("nodemailer");
 
 initializeApp();
 const db = getFirestore();
+
+// Gmail account used to send + receive booking mail.
+// GMAIL_APP_PASSWORD is a Firebase secret (16-char Google App Password), never hard-coded.
+const GMAIL_USER = "dosalabsusa@gmail.com";
+const OWNER_EMAIL = "dosalabsusa@gmail.com"; // where new-booking notifications land
+
+function getTransport() {
+  return nodemailer.createTransport({
+    host: "smtp.gmail.com",
+    port: 465,
+    secure: true,
+    auth: { user: GMAIL_USER, pass: process.env.GMAIL_APP_PASSWORD }
+  });
+}
 
 const LAB_CATALOG = {
   "c1": { name: "Dosa Mastery Lab", priceCents: 8900 },
@@ -16,23 +30,23 @@ const LAB_CATALOG = {
   "c7": { name: "Kids Dosa Lab", priceCents: 3900 }
 };
 
-async function sendResendEmail(booking, bookingId) {
-  if (!process.env.RESEND_API_KEY) {
-    console.error("Missing RESEND_API_KEY secret");
+async function sendBookingEmails(booking, bookingId) {
+  if (!process.env.GMAIL_APP_PASSWORD) {
+    console.error("Missing GMAIL_APP_PASSWORD secret");
     return { data: null, error: { name: "CONFIG_ERROR", message: "Mail provider not configured" } };
   }
 
-  const resend = new Resend(process.env.RESEND_API_KEY);
-  const from = "Dosalabs <hello@dosalabs.io>"; 
-  const replyTo = "hello@dosalabs.io";
-  
+  const transporter = getTransport();
+  const from = `"Dosalabs" <${GMAIL_USER}>`;
+
   const dashboardUrl = `https://dosalabs.io/#/dashboard?bid=${booking.bookingRequestId}`;
   const whatsappUrl = `https://chat.whatsapp.com/example-dosalabs-community`; // Replace with actual group link
 
-  const payload = {
+  // --- 1) Confirmation email to the customer ---
+  const customerPayload = {
     from,
-    reply_to: replyTo,
-    to: [booking.email],
+    replyTo: OWNER_EMAIL,
+    to: booking.email,
     subject: `Lab Confirmed: ${booking.labName} [${bookingId}]`,
     html: `
       <div style="font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #E6E7EB; border-radius: 24px; overflow: hidden; background: #FFF;">
@@ -67,18 +81,51 @@ async function sendResendEmail(booking, bookingId) {
     `
   };
 
+  // --- 2) New-booking notification to the owner (dosalabsusa@gmail.com) ---
+  const ownerPayload = {
+    from: `"Dosalabs Bookings" <${GMAIL_USER}>`,
+    replyTo: booking.email,
+    to: OWNER_EMAIL,
+    subject: `New booking: ${booking.labName} — ${booking.guestName}`,
+    html: `
+      <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 600px; margin: 0 auto; line-height: 1.6; color: #0B0B0C;">
+        <h2 style="margin: 0 0 16px;">New booking received</h2>
+        <table style="border-collapse: collapse; width: 100%; font-size: 14px;">
+          <tr><td style="padding: 6px 0; color: #6B7280;">Booking ID</td><td style="padding: 6px 0; font-weight: bold;">${bookingId}</td></tr>
+          <tr><td style="padding: 6px 0; color: #6B7280;">Lab</td><td style="padding: 6px 0; font-weight: bold;">${booking.labName}</td></tr>
+          <tr><td style="padding: 6px 0; color: #6B7280;">Name</td><td style="padding: 6px 0;">${booking.guestName}</td></tr>
+          <tr><td style="padding: 6px 0; color: #6B7280;">Email</td><td style="padding: 6px 0;"><a href="mailto:${booking.email}">${booking.email}</a></td></tr>
+          <tr><td style="padding: 6px 0; color: #6B7280;">Phone</td><td style="padding: 6px 0;">${booking.phone || "—"}</td></tr>
+          <tr><td style="padding: 6px 0; color: #6B7280;">Session</td><td style="padding: 6px 0;">${booking.datetimeISO.replace('T', ' ')}</td></tr>
+          <tr><td style="padding: 6px 0; color: #6B7280;">Amount</td><td style="padding: 6px 0;">$${(booking.amountCents / 100).toFixed(2)}</td></tr>
+        </table>
+        <p style="font-size: 13px; color: #6B7280; margin-top: 20px;">Reply to this email to reach the customer directly.</p>
+      </div>
+    `
+  };
+
   try {
-    return await resend.emails.send(payload);
+    // The customer confirmation is the primary send — its result drives emailStatus.
+    const info = await transporter.sendMail(customerPayload);
+
+    // Owner notification is best-effort: never let it fail the booking.
+    try {
+      await transporter.sendMail(ownerPayload);
+    } catch (ownerErr) {
+      console.error("Owner notification failed (non-fatal):", ownerErr && ownerErr.message);
+    }
+
+    return { data: { id: info.messageId }, error: null };
   } catch (e) {
     return { data: null, error: e };
   }
 }
 
 // Using cors: true allows requests from any origin (e.g., preview domains)
-exports.submitBooking = onRequest({ secrets: ["RESEND_API_KEY"], cors: true }, async (req, res) => {
+exports.submitBooking = onRequest({ secrets: ["GMAIL_APP_PASSWORD"], cors: true }, async (req, res) => {
   if (req.method !== "POST") return res.status(405).json({ error: "Method Not Allowed" });
 
-  const { bookingRequestId, email, labId, datetimeISO, guestName } = req.body;
+  const { bookingRequestId, email, labId, datetimeISO, guestName, phone } = req.body;
 
   if (!bookingRequestId || !email || !labId) {
     return res.status(400).json({ error: "Missing required fields" });
@@ -96,6 +143,7 @@ exports.submitBooking = onRequest({ secrets: ["RESEND_API_KEY"], cors: true }, a
       bookingId,
       email,
       guestName: guestName || "Guest",
+      phone: phone || "",
       labId,
       labName: lab.name,
       datetimeISO,
@@ -123,7 +171,7 @@ exports.submitBooking = onRequest({ secrets: ["RESEND_API_KEY"], cors: true }, a
       throw e;
     }
 
-    const { data, error } = await sendResendEmail(bookingData, bookingId);
+    const { data, error } = await sendBookingEmails(bookingData, bookingId);
     
     const update = {
       emailSendCount: 1,
@@ -154,7 +202,7 @@ exports.submitBooking = onRequest({ secrets: ["RESEND_API_KEY"], cors: true }, a
   }
 });
 
-exports.resendBookingEmail = onRequest({ secrets: ["RESEND_API_KEY"], cors: true }, async (req, res) => {
+exports.resendBookingEmail = onRequest({ secrets: ["GMAIL_APP_PASSWORD"], cors: true }, async (req, res) => {
   if (req.method !== "POST") return res.status(405).json({ error: "Method Not Allowed" });
 
   const { bookingRequestId } = req.body;
@@ -183,7 +231,7 @@ exports.resendBookingEmail = onRequest({ secrets: ["RESEND_API_KEY"], cors: true
       }
     }
 
-    const { data: emailData, error } = await sendResendEmail(data, data.bookingId);
+    const { data: emailData, error } = await sendBookingEmails(data, data.bookingId);
     
     const update = {
       emailSendCount: FieldValue.increment(1),
