@@ -131,3 +131,50 @@ export const resendBookingEmail = async (bookingRequestId: string): Promise<{ su
     return { success: false, error: err.message };
   }
 };
+
+export interface CateringPayload {
+  bookingRequestId: string;
+  name: string;
+  email: string;
+  phone: string;
+  eventDate: string;
+  guests: number;
+  city: string;
+  appetizers: string[];
+  rice: string;
+  dessert: string;
+  notes: string;
+}
+
+export interface CateringResponse {
+  success: boolean;
+  status?: string;
+  cateringId: string;
+  emailStatus: 'SENT' | 'FAILED' | 'QUEUED' | 'PENDING';
+  totalCents?: number;
+  error?: string;
+}
+
+/**
+ * Submits a Live Dosa Catering request to the Firebase Functions backend.
+ * The server recomputes the price, so the returned total is authoritative.
+ */
+export const submitCatering = async (payload: CateringPayload): Promise<CateringResponse> => {
+  try {
+    const result = await handleFetch(`${API_BASE}/submitCatering`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+    return {
+      success: true,
+      status: result.status,
+      cateringId: result.cateringId,
+      emailStatus: result.emailStatus,
+      totalCents: result.totalCents
+    };
+  } catch (error: any) {
+    console.error("Catering API Error:", error);
+    return { success: false, cateringId: '', emailStatus: 'FAILED', error: error.message };
+  }
+};

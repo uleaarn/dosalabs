@@ -29,6 +29,7 @@ export const SwirlIcon = ({ className = "w-6 h-6" }: { className?: string }) => 
 export const NAV_LINKS = [
   { name: 'Classes', path: '/classes' },
   { name: 'In-Home', path: '/in-home' },
+  { name: 'Catering', path: '/catering' },
   { name: 'Shop Kits', path: '/subscriptions-kits' },
   { name: 'Library', path: '/library' },
   { name: 'About', path: '/about' },

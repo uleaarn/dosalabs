@@ -30,6 +30,13 @@ const LAB_CATALOG = {
   "c7": { name: "Kids Dosa Lab", priceCents: 3900 }
 };
 
+// Live Dosa Catering package. Price is authoritative here (never trust the client).
+const CATERING = {
+  pricePerPersonCents: 2500, // $25 / person
+  chefFeeCents: 20000,       // $200 flat chef fee
+  minGuests: 30
+};
+
 async function sendBookingEmails(booking, bookingId) {
   if (!process.env.GMAIL_APP_PASSWORD) {
     console.error("Missing GMAIL_APP_PASSWORD secret");
@@ -282,5 +289,161 @@ exports.getBooking = onRequest({ cors: true }, async (req, res) => {
     });
   } catch (e) {
     return res.status(500).json({ error: "Fetch failed" });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// Live Dosa Catering
+// ---------------------------------------------------------------------------
+const money = (cents) => `$${(cents / 100).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+async function sendCateringEmails(booking) {
+  if (!process.env.GMAIL_APP_PASSWORD) {
+    console.error("Missing GMAIL_APP_PASSWORD secret");
+    return { data: null, error: { name: "CONFIG_ERROR", message: "Mail provider not configured" } };
+  }
+
+  const transporter = getTransport();
+  const apps = (booking.appetizers || []).join(", ") || "—";
+  const priceRows = `
+    <tr><td style="padding:6px 0;color:#6B7280;">Per person</td><td style="padding:6px 0;">${money(booking.perPersonCents)} × ${booking.guests}</td></tr>
+    <tr><td style="padding:6px 0;color:#6B7280;">Chef fee</td><td style="padding:6px 0;">${money(booking.chefFeeCents)}</td></tr>
+    <tr><td style="padding:10px 0 0;color:#0B0B0C;font-weight:bold;border-top:1px solid #E6E7EB;">Estimated total</td><td style="padding:10px 0 0;font-weight:bold;border-top:1px solid #E6E7EB;">${money(booking.totalCents)}</td></tr>`;
+
+  // 1) Actionable lead to the owner
+  const ownerPayload = {
+    from: `"Dosalabs Catering" <${GMAIL_USER}>`,
+    replyTo: booking.email,
+    to: OWNER_EMAIL,
+    subject: `New CATERING request: ${booking.eventDate} · ${booking.guests} guests · ${booking.name}`,
+    html: `
+      <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-width:600px;margin:0 auto;line-height:1.6;color:#0B0B0C;">
+        <h2 style="margin:0 0 16px;">New Live Dosa Catering request</h2>
+        <table style="border-collapse:collapse;width:100%;font-size:14px;">
+          <tr><td style="padding:6px 0;color:#6B7280;">Request ID</td><td style="padding:6px 0;font-weight:bold;">${booking.cateringId}</td></tr>
+          <tr><td style="padding:6px 0;color:#6B7280;">Event date</td><td style="padding:6px 0;font-weight:bold;">${booking.eventDate}</td></tr>
+          <tr><td style="padding:6px 0;color:#6B7280;">Guests</td><td style="padding:6px 0;font-weight:bold;">${booking.guests}</td></tr>
+          <tr><td style="padding:6px 0;color:#6B7280;">Name</td><td style="padding:6px 0;">${booking.name}</td></tr>
+          <tr><td style="padding:6px 0;color:#6B7280;">Email</td><td style="padding:6px 0;"><a href="mailto:${booking.email}">${booking.email}</a></td></tr>
+          <tr><td style="padding:6px 0;color:#6B7280;">Phone</td><td style="padding:6px 0;">${booking.phone || "—"}</td></tr>
+          <tr><td style="padding:6px 0;color:#6B7280;">Location</td><td style="padding:6px 0;">${booking.city || "—"}</td></tr>
+          <tr><td style="padding:6px 0;color:#6B7280;">Appetizers</td><td style="padding:6px 0;">${apps}</td></tr>
+          <tr><td style="padding:6px 0;color:#6B7280;">Rice</td><td style="padding:6px 0;">${booking.rice || "—"}</td></tr>
+          <tr><td style="padding:6px 0;color:#6B7280;">Dessert</td><td style="padding:6px 0;">${booking.dessert || "—"}</td></tr>
+          <tr><td style="padding:6px 0;color:#6B7280;vertical-align:top;">Notes</td><td style="padding:6px 0;">${booking.notes || "—"}</td></tr>
+          ${priceRows}
+        </table>
+        <p style="font-size:13px;color:#6B7280;margin-top:20px;">Reply to this email to reach ${booking.name} and confirm the date + deposit.</p>
+      </div>`
+  };
+
+  // 2) Reassuring receipt to the customer
+  const customerPayload = {
+    from: `"Dosalabs" <${GMAIL_USER}>`,
+    replyTo: OWNER_EMAIL,
+    to: booking.email,
+    subject: `We got your Live Dosa Catering request [${booking.cateringId}]`,
+    html: `
+      <div style="font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;max-width:600px;margin:0 auto;border:1px solid #E6E7EB;border-radius:24px;overflow:hidden;background:#FFF;">
+        <div style="background-color:#0B0B0C;padding:48px 40px;text-align:center;">
+          <h1 style="color:#BF9264;margin:0;font-size:22px;text-transform:uppercase;letter-spacing:3px;font-weight:800;">Request Received</h1>
+        </div>
+        <div style="padding:40px;color:#0B0B0C;line-height:1.6;">
+          <p style="font-size:16px;">Hi ${booking.name},</p>
+          <p style="font-size:16px;">Thank you for requesting a <strong>Live Dosa Catering</strong> station for your event. We've received the details below and a member of our team will <strong>confirm your date within 24 hours</strong>.</p>
+          <div style="background-color:#F6F7F8;padding:28px;border-radius:16px;margin:28px 0;border:1px solid #EDEFF2;">
+            <table style="border-collapse:collapse;width:100%;font-size:14px;color:#3A3D42;">
+              <tr><td style="padding:6px 0;color:#6B7280;">Request ID</td><td style="padding:6px 0;font-weight:bold;color:#0B0B0C;">${booking.cateringId}</td></tr>
+              <tr><td style="padding:6px 0;color:#6B7280;">Event date</td><td style="padding:6px 0;">${booking.eventDate}</td></tr>
+              <tr><td style="padding:6px 0;color:#6B7280;">Guests</td><td style="padding:6px 0;">${booking.guests}</td></tr>
+              ${priceRows}
+            </table>
+          </div>
+          <p style="font-size:13px;color:#6B7280;">This is an estimate to hold your date — not a charge. We'll confirm availability and a small deposit when we reach out. Questions? Just reply to this email.</p>
+        </div>
+        <div style="background-color:#F6F7F8;padding:20px;text-align:center;border-top:1px solid #E6E7EB;">
+          <p style="margin:0;font-size:11px;font-weight:bold;text-transform:uppercase;letter-spacing:2px;color:#9CA3AF;">Dosalabs — Live Dosa Catering</p>
+        </div>
+      </div>`
+  };
+
+  try {
+    const info = await transporter.sendMail(ownerPayload); // owner lead is the primary send
+    try {
+      await transporter.sendMail(customerPayload);
+    } catch (custErr) {
+      console.error("Customer catering receipt failed (non-fatal):", custErr && custErr.message);
+    }
+    return { data: { id: info.messageId }, error: null };
+  } catch (e) {
+    return { data: null, error: e };
+  }
+}
+
+exports.submitCatering = onRequest({ secrets: ["GMAIL_APP_PASSWORD"], cors: true }, async (req, res) => {
+  if (req.method !== "POST") return res.status(405).json({ error: "Method Not Allowed" });
+
+  const { bookingRequestId, name, email, phone, eventDate, guests, city, appetizers, rice, dessert, notes } = req.body;
+
+  if (!bookingRequestId || !name || !email || !eventDate || !guests) {
+    return res.status(400).json({ error: "Missing required fields" });
+  }
+
+  const g = parseInt(guests, 10);
+  if (isNaN(g) || g < CATERING.minGuests) {
+    return res.status(400).json({ error: `A minimum of ${CATERING.minGuests} guests is required.` });
+  }
+
+  try {
+    const totalCents = g * CATERING.pricePerPersonCents + CATERING.chefFeeCents;
+    const cateringId = `DC-${Math.floor(100000 + Math.random() * 900000)}`;
+    const now = FieldValue.serverTimestamp();
+
+    const data = {
+      bookingRequestId,
+      cateringId,
+      name,
+      email,
+      phone: phone || "",
+      eventDate,
+      guests: g,
+      city: city || "",
+      appetizers: Array.isArray(appetizers) ? appetizers.slice(0, 2) : [],
+      rice: rice || "",
+      dessert: dessert || "",
+      notes: notes || "",
+      perPersonCents: CATERING.pricePerPersonCents,
+      chefFeeCents: CATERING.chefFeeCents,
+      totalCents,
+      createdAt: now,
+      updatedAt: now,
+      emailStatus: "QUEUED"
+    };
+
+    try {
+      await db.collection("cateringRequests").doc(bookingRequestId).create(data);
+    } catch (e) {
+      if (e.code === 6) { // ALREADY_EXISTS
+        const doc = await db.collection("cateringRequests").doc(bookingRequestId).get();
+        const d = doc.data();
+        return res.status(200).json({ status: "ALREADY_EXISTS", cateringId: d.cateringId, emailStatus: d.emailStatus, totalCents: d.totalCents });
+      }
+      throw e;
+    }
+
+    const { error } = await sendCateringEmails(data);
+    const update = { lastEmailAttemptAt: FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp() };
+    if (error) {
+      update.emailStatus = "FAILED";
+      update.emailErrorMessage = error.message || "Failed to send catering email";
+    } else {
+      update.emailStatus = "SENT";
+    }
+    await db.collection("cateringRequests").doc(bookingRequestId).update(update);
+
+    return res.status(200).json({ status: "CREATED", cateringId, emailStatus: update.emailStatus, totalCents });
+  } catch (err) {
+    console.error("[Catering Fatal]", err);
+    return res.status(500).json({ error: "Internal Server Error" });
   }
 });

@@ -9,6 +9,7 @@ import { Policies } from './pages/Policies.tsx';
 import { Legal } from './pages/Legal.tsx';
 import { ClassDetail } from './pages/ClassDetail.tsx';
 import { InHome } from './pages/InHome.tsx';
+import { Catering } from './pages/Catering.tsx';
 import { BlogPostDetail } from './pages/BlogPostDetail.tsx';
 import { KitCheckout } from './pages/KitCheckout.tsx';
 import { ClaimDashboard } from './pages/ClaimDashboard.tsx';
@@ -304,6 +305,7 @@ export default function App() {
           <Route path="/classes" element={<Classes />} />
           <Route path="/classes/:slug" element={<ClassDetail />} />
           <Route path="/in-home" element={<InHome />} />
+          <Route path="/catering" element={<Catering />} />
           <Route path="/contact-booking" element={<ContactBooking />} />
           <Route path="/subscriptions-kits" element={<Kits />} />
           <Route path="/kit-checkout/:kitId" element={<KitCheckout />} />
